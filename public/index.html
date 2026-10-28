@@ -1,83 +1,246 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unbeatable Tic-Tac-Toe</title>
+<title>Tic-Tac-Toe</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--mut:#6b6a63;--line:#d9d6cc;--x:#d9480f;--o:#1971c2;--win:#fff3bf}
-@media(prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--ink:#f1efe8;--mut:#a09e94;--line:#3a3935;--x:#ff922b;--o:#74c0fc;--win:#4a4020}}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:16px system-ui,sans-serif}
-main{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(92vw,380px);text-align:center}
-h1{font-size:1.3rem;margin:0 0 4px}p{color:var(--mut);margin:4px 0 16px}
-.row{display:flex;gap:8px;justify-content:center}
-button{font:inherit;cursor:pointer;color:var(--ink)}
-.pick{flex:1;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
-.pick:hover{border-color:var(--ink)}
-#board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
-.cell{aspect-ratio:1;font-size:2.6rem;font-weight:700;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
-.cell.win{background:var(--win)}.X{color:var(--x)}.O{color:var(--o)}
-#status{min-height:1.5em;font-weight:600}
-.hidden{display:none}
-</style></head><body><main>
-<h1>Unbeatable Tic-Tac-Toe</h1>
-<p>Python minimax + alpha-beta. Best you can do is draw.</p>
-<section id="setup"><p>Choose your side (X moves first)</p>
-<div class="row"><button class="pick" data-s="X">Play X</button><button class="pick" data-s="O">Play O</button><button class="pick" data-s="R">Random</button></div></section>
-<section id="game" class="hidden">
-<div id="status"></div><div id="board"></div>
-<button class="pick" id="again" style="width:100%">New game</button></section>
+  :root {
+    --bg: #14213d;
+    --panel: #1d2d50;
+    --line: #34497a;
+    --text: #f1f5ff;
+    --muted: #a3b1d1;
+    --x: #ffd23f;
+    --o: #3bceac;
+    --hint: #ff7b9c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  main { width: 100%; max-width: 420px; }
+  h1 { font-size: 1.6rem; margin: 0 0 16px; letter-spacing: 0.02em; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button {
+    background: transparent; color: var(--muted); border: 0; padding: 8px 14px;
+    font: inherit; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+  label.opt { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 6px; align-items: center; }
+  .score { display: flex; gap: 8px; margin-bottom: 16px; }
+  .score div { flex: 1; background: var(--panel); border-radius: 10px; padding: 8px 10px; text-align: center; }
+  .score b { display: block; font-size: 1.5rem; }
+  .score .sx b { color: var(--x); }
+  .score .so b { color: var(--o); }
+  .score span { color: var(--muted); font-size: 0.8rem; }
+  #status { min-height: 1.6em; margin: 0 0 12px; font-size: 1.1rem; }
+  #board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .cell {
+    aspect-ratio: 1; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 12px; font: inherit; font-size: clamp(2.4rem, 14vw, 4rem);
+    font-weight: 700; cursor: pointer; color: var(--text);
+  }
+  .cell:hover:not(:disabled) { border-color: var(--muted); }
+  .cell:disabled { cursor: default; }
+  .cell.x { color: var(--x); }
+  .cell.o { color: var(--o); }
+  .cell.win { background: #2a4170; border-color: var(--text); }
+  .cell.hint { border-color: var(--hint); box-shadow: 0 0 0 3px rgba(255, 123, 156, 0.35); }
+  .actions { display: flex; gap: 8px; }
+  .actions button {
+    flex: 1; padding: 12px; font: inherit; border-radius: 10px; cursor: pointer;
+    border: 2px solid var(--line); background: transparent; color: var(--text);
+  }
+  #hintBtn { border-color: var(--hint); color: var(--hint); }
+  .actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tic-Tac-Toe</h1>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Game mode">
+      <button id="modeAI" aria-pressed="true">Play vs AI</button>
+      <button id="modeTwo" aria-pressed="false">Two players</button>
+    </div>
+    <label class="opt" id="aiFirstWrap">
+      <input type="checkbox" id="aiFirst"> AI moves first
+    </label>
+  </div>
+
+  <div class="score">
+    <div class="sx"><b id="sx">0</b><span id="lx">X wins</span></div>
+    <div><b id="sd">0</b><span>Draws</span></div>
+    <div class="so"><b id="so">0</b><span id="lo">O wins</span></div>
+  </div>
+
+  <p id="status" aria-live="polite"></p>
+  <div id="board" role="grid" aria-label="Tic-tac-toe board"></div>
+
+  <div class="actions">
+    <button id="hintBtn">Hint</button>
+    <button id="newBtn">New game</button>
+  </div>
 </main>
+
 <script>
-const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-const ORDER=[4,0,2,6,8,1,3,5,7];
-let board,human,ai,turn,over;
-const $=id=>document.getElementById(id);
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
-function winner(b){for(const l of LINES){const[a,c,d]=l;if(b[a]!==" "&&b[a]===b[c]&&b[c]===b[d])return{w:b[a],line:l}}return null}
+let board, turn, over, mode = "ai", aiMark = "O", hintCell = null;
+const score = { X: 0, O: 0, D: 0 };
 
-// JS mirror of the Python engine, used only if /api/move is unreachable (e.g. opened locally).
-function ab(b,p,me,d,al,be){
-  const r=winner(b);if(r)return r.w===me?10-d:d-10;
-  if(!b.includes(" "))return 0;
-  const o=p==="X"?"O":"X";
-  if(p===me){let best=-100;for(const m of ORDER)if(b[m]===" "){b[m]=p;best=Math.max(best,ab(b,o,me,d+1,al,be));b[m]=" ";al=Math.max(al,best);if(al>=be)break}return best}
-  let best=100;for(const m of ORDER)if(b[m]===" "){b[m]=p;best=Math.min(best,ab(b,o,me,d+1,al,be));b[m]=" ";be=Math.min(be,best);if(al>=be)break}return best}
-function localMove(b,me){
-  if(b.every(c=>c===" "))return [0,2,4,6,8][Math.floor(Math.random()*5)];
-  const o=me==="X"?"O":"X";let bs=-100,bi=null;
-  for(const m of ORDER)if(b[m]===" "){b[m]=me;const s=ab(b,o,me,1,-100,100);b[m]=" ";if(s>bs){bs=s;bi=m}}return bi}
+const $ = (id) => document.getElementById(id);
+const boardEl = $("board");
 
-async function aiMove(){
-  try{
-    const r=await fetch("/api/move",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({board,ai})});
-    if(!r.ok)throw 0;return (await r.json()).move;
-  }catch(e){return localMove([...board],ai)}
+/* ---------- game engine (minimax) ---------- */
+function findWinner(b) {
+  for (const [a, c, d] of LINES) {
+    if (b[a] && b[a] === b[c] && b[a] === b[d]) return { mark: b[a], line: [a, c, d] };
+  }
+  return null;
 }
 
-function render(line){
-  $("board").innerHTML="";
-  board.forEach((c,i)=>{const b=document.createElement("button");
-    b.className="cell "+c+(line&&line.includes(i)?" win":"");b.textContent=c.trim();
-    b.disabled=over||c!==" "||turn!==human;b.onclick=()=>play(i);$("board").appendChild(b)});
+// Score from the point of view of `me`. Faster wins and slower losses score higher.
+function minimax(b, toMove, me, depth) {
+  const w = findWinner(b);
+  if (w) return w.mark === me ? 10 - depth : depth - 10;
+  if (b.every(Boolean)) return 0;
+  const other = toMove === "X" ? "O" : "X";
+  let best = toMove === me ? -Infinity : Infinity;
+  for (let i = 0; i < 9; i++) {
+    if (b[i]) continue;
+    b[i] = toMove;
+    const s = minimax(b, other, me, depth + 1);
+    b[i] = null;
+    best = toMove === me ? Math.max(best, s) : Math.min(best, s);
+  }
+  return best;
 }
-function finish(){
-  const r=winner(board);
-  if(r){over=true;$("status").textContent=r.w===human?"You win!":"AI wins!";render(r.line);return true}
-  if(!board.includes(" ")){over=true;$("status").textContent="Draw!";render();return true}
-  return false}
-async function play(i){
-  board[i]=human;turn=ai;render();if(finish())return;
-  $("status").textContent="AI is thinking…";
-  const m=await aiMove();board[m]=ai;turn=human;
-  if(!finish()){$("status").textContent="Your turn ("+human+")";render()}}
-async function start(side){
-  human=side==="R"?(Math.random()<.5?"X":"O"):side;ai=human==="X"?"O":"X";
-  board=Array(9).fill(" ");over=false;turn="X";
-  $("setup").classList.add("hidden");$("game").classList.remove("hidden");
-  $("status").textContent="You are "+human;render();
-  if(ai==="X"){$("status").textContent="AI is thinking…";const m=await aiMove();board[m]="X";turn=human;$("status").textContent="You are O. Your turn";render()}
-  else $("status").textContent="You are X. Your turn"}
-document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>start(b.dataset.s));
-$("again").onclick=()=>{$("game").classList.add("hidden");$("setup").classList.remove("hidden")};
-</script></body></html>
+
+function bestMove(b, player) {
+  const other = player === "X" ? "O" : "X";
+  let bestScore = -Infinity, move = null;
+  for (let i = 0; i < 9; i++) {
+    if (b[i]) continue;
+    b[i] = player;
+    const s = minimax(b, other, player, 1);
+    b[i] = null;
+    if (s > bestScore) { bestScore = s; move = i; }
+  }
+  return move;
+}
+
+/* ---------- UI ---------- */
+function buildBoard() {
+  boardEl.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const c = document.createElement("button");
+    c.className = "cell";
+    c.setAttribute("aria-label", "Cell " + (i + 1));
+    c.addEventListener("click", () => humanMove(i));
+    boardEl.appendChild(c);
+  }
+}
+
+function render() {
+  const w = findWinner(board);
+  [...boardEl.children].forEach((c, i) => {
+    c.textContent = board[i] || "";
+    c.className = "cell" + (board[i] ? " " + board[i].toLowerCase() : "")
+      + (w && w.line.includes(i) ? " win" : "")
+      + (hintCell === i ? " hint" : "");
+    c.disabled = over || !!board[i] || isAITurn();
+  });
+
+  if (w) setStatus(label(w.mark) + " wins");
+  else if (over) setStatus("It's a draw");
+  else if (isAITurn()) setStatus("AI is thinking…");
+  else setStatus(label(turn) + " to move");
+
+  $("hintBtn").disabled = over || isAITurn();
+  $("sx").textContent = score.X;
+  $("so").textContent = score.O;
+  $("sd").textContent = score.D;
+  $("lx").textContent = mode === "ai" ? (aiMark === "X" ? "AI (X)" : "You (X)") : "Player X";
+  $("lo").textContent = mode === "ai" ? (aiMark === "O" ? "AI (O)" : "You (O)") : "Player O";
+}
+
+function label(mark) {
+  if (mode === "two") return "Player " + mark;
+  return mark === aiMark ? "AI (" + mark + ")" : "You (" + mark + ")";
+}
+
+function setStatus(t) { $("status").textContent = t; }
+function isAITurn() { return mode === "ai" && !over && turn === aiMark; }
+
+function place(i) {
+  board[i] = turn;
+  hintCell = null;
+  const w = findWinner(board);
+  if (w) { over = true; score[w.mark]++; }
+  else if (board.every(Boolean)) { over = true; score.D++; }
+  else turn = turn === "X" ? "O" : "X";
+  render();
+  if (isAITurn()) setTimeout(aiMove, 350);
+}
+
+function humanMove(i) {
+  if (over || board[i] || isAITurn()) return;
+  place(i);
+}
+
+function aiMove() {
+  if (!isAITurn()) return;
+  place(bestMove(board, aiMark));
+}
+
+function showHint() {
+  if (over || isAITurn()) return;
+  hintCell = bestMove(board, turn);
+  render();
+  setStatus(label(turn) + " to move. Best move: cell " + (hintCell + 1));
+}
+
+function newGame() {
+  board = Array(9).fill(null);
+  turn = "X";
+  over = false;
+  hintCell = null;
+  aiMark = $("aiFirst").checked ? "X" : "O";
+  render();
+  if (isAITurn()) setTimeout(aiMove, 350);
+}
+
+function setMode(m) {
+  mode = m;
+  $("modeAI").setAttribute("aria-pressed", m === "ai");
+  $("modeTwo").setAttribute("aria-pressed", m === "two");
+  $("aiFirstWrap").style.display = m === "ai" ? "" : "none";
+  score.X = score.O = score.D = 0;
+  newGame();
+}
+
+$("modeAI").addEventListener("click", () => setMode("ai"));
+$("modeTwo").addEventListener("click", () => setMode("two"));
+$("aiFirst").addEventListener("change", newGame);
+$("hintBtn").addEventListener("click", showHint);
+$("newBtn").addEventListener("click", newGame);
+
+buildBoard();
+setMode("ai");
+</script>
+</body>
+</html>

@@ -4,87 +4,118 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tic-Tac-Toe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  /* Violet Dusk palette */
   :root {
-    --bg: #14213d;
-    --panel: #1d2d50;
-    --line: #34497a;
-    --text: #f1f5ff;
-    --muted: #a3b1d1;
-    --x: #ffd23f;
-    --o: #3bceac;
-    --hint: #ff7b9c;
+    --plum: #502D55;
+    --berry: #935073;
+    --peach: #F6DBC0;
+    --cream: #F8F4E9;
+    --night: #1d1126;
+    --panel: rgba(248, 244, 233, 0.07);
+    --edge: rgba(248, 244, 233, 0.22);
+    --muted: rgba(248, 244, 233, 0.7);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at 30% 0%, rgba(147, 80, 115, 0.35), transparent 55%),
+      radial-gradient(ellipse at 90% 80%, rgba(80, 45, 85, 0.6), transparent 60%),
+      var(--night);
+    background-attachment: fixed;
+    color: var(--cream);
+    font-family: "Rubik", "Segoe UI", system-ui, sans-serif;
     display: flex;
     justify-content: center;
-    padding: 24px 16px;
+    padding: 28px 16px;
   }
   main { width: 100%; max-width: 420px; }
-  h1 { font-size: 1.6rem; margin: 0 0 16px; letter-spacing: 0.02em; }
-  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
-  .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; }
+  h1 { font-size: 2rem; font-weight: 700; margin: 0 0 20px; text-align: center; }
+
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .row > .name { color: var(--muted); font-size: 0.9rem; min-width: 74px; }
+  .seg {
+    display: inline-flex; background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 999px; padding: 3px; gap: 2px;
+  }
   .seg button {
-    background: transparent; color: var(--muted); border: 0; padding: 8px 14px;
-    font: inherit; cursor: pointer;
+    background: transparent; color: var(--muted); border: 0; border-radius: 999px;
+    padding: 7px 16px; font: inherit; font-size: 0.9rem; cursor: pointer;
   }
-  .seg button[aria-pressed="true"] { background: var(--line); color: var(--text); }
-  label.opt { color: var(--muted); font-size: 0.9rem; display: inline-flex; gap: 6px; align-items: center; }
-  .score { display: flex; gap: 8px; margin-bottom: 16px; }
-  .score div { flex: 1; background: var(--panel); border-radius: 10px; padding: 8px 10px; text-align: center; }
-  .score b { display: block; font-size: 1.5rem; }
-  .score .sx b { color: var(--x); }
-  .score .so b { color: var(--o); }
-  .score span { color: var(--muted); font-size: 0.8rem; }
-  #status { min-height: 1.6em; margin: 0 0 12px; font-size: 1.1rem; }
-  #board {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-    margin-bottom: 16px;
+  .seg button[aria-pressed="true"] { background: var(--peach); color: var(--plum); font-weight: 500; }
+
+  .score { display: flex; gap: 8px; margin: 18px 0 14px; }
+  .score div {
+    flex: 1; background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 14px; padding: 8px 6px; text-align: center;
   }
+  .score b { display: block; font-size: 1.5rem; font-weight: 700; }
+  .score span { color: var(--muted); font-size: 0.78rem; }
+
+  #status { min-height: 1.6em; margin: 0 0 12px; font-size: 1.1rem; text-align: center; }
+
+  #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
   .cell {
-    aspect-ratio: 1; background: var(--panel); border: 2px solid var(--line);
-    border-radius: 12px; font: inherit; font-size: clamp(2.4rem, 14vw, 4rem);
-    font-weight: 700; cursor: pointer; color: var(--text);
+    aspect-ratio: 1; background: var(--cream); border: 2px solid transparent;
+    border-radius: 16px; font: inherit; font-size: clamp(2.4rem, 14vw, 4rem); font-weight: 700;
+    cursor: pointer; position: relative; color: var(--plum);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   }
-  .cell:hover:not(:disabled) { border-color: var(--muted); }
+  .cell.x { color: var(--plum); }
+  .cell.o { color: var(--berry); }
+  .cell:hover:not(:disabled):not(.x):not(.o) { background: var(--peach); }
   .cell:disabled { cursor: default; }
-  .cell.x { color: var(--x); }
-  .cell.o { color: var(--o); }
-  .cell.win { background: #2a4170; border-color: var(--text); }
-  .cell.hint { border-color: var(--hint); box-shadow: 0 0 0 3px rgba(255, 123, 156, 0.35); }
-  .actions { display: flex; gap: 8px; }
-  .actions button {
-    flex: 1; padding: 12px; font: inherit; border-radius: 10px; cursor: pointer;
-    border: 2px solid var(--line); background: transparent; color: var(--text);
+  .cell.win { background: var(--peach); border-color: var(--plum); }
+  .cell.hint { box-shadow: 0 0 0 4px var(--peach), 0 0 22px rgba(246, 219, 192, 0.55); }
+  .cell.hint::after {
+    content: attr(data-ghost); position: absolute; inset: 0; display: grid; place-items: center;
+    opacity: 0.35;
   }
-  #hintBtn { border-color: var(--hint); color: var(--hint); }
+  .cell.hint[data-ghost="X"]::after { color: var(--plum); }
+  .cell.hint[data-ghost="O"]::after { color: var(--berry); }
+
+  .actions { display: flex; gap: 10px; }
+  .actions button {
+    flex: 1; padding: 13px; font: inherit; font-weight: 500; border-radius: 999px; cursor: pointer;
+  }
+  #hintBtn { background: var(--peach); color: var(--plum); border: 0; }
+  #newBtn { background: transparent; color: var(--cream); border: 1px solid var(--edge); }
   .actions button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  button:focus-visible { outline: 3px solid var(--peach); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .cell { transition: background 0.15s, box-shadow 0.15s; }
+  }
 </style>
 </head>
 <body>
 <main>
   <h1>Tic-Tac-Toe</h1>
 
-  <div class="controls">
+  <div class="row">
+    <span class="name">Mode</span>
     <div class="seg" role="group" aria-label="Game mode">
-      <button id="modeAI" aria-pressed="true">Play vs AI</button>
+      <button id="modeAI" aria-pressed="true">Vs AI</button>
       <button id="modeTwo" aria-pressed="false">Two players</button>
     </div>
-    <label class="opt" id="aiFirstWrap">
-      <input type="checkbox" id="aiFirst"> AI moves first
-    </label>
+  </div>
+
+  <div class="row" id="pickRow">
+    <span class="name">You play</span>
+    <div class="seg" role="group" aria-label="Choose your mark">
+      <button id="pickX" aria-pressed="true">X</button>
+      <button id="pickO" aria-pressed="false">O</button>
+      <button id="pickR" aria-pressed="false">Random</button>
+    </div>
   </div>
 
   <div class="score">
-    <div class="sx"><b id="sx">0</b><span id="lx">X wins</span></div>
+    <div><b id="sx">0</b><span id="lx">X wins</span></div>
     <div><b id="sd">0</b><span>Draws</span></div>
-    <div class="so"><b id="so">0</b><span id="lo">O wins</span></div>
+    <div><b id="so">0</b><span id="lo">O wins</span></div>
   </div>
 
   <p id="status" aria-live="polite"></p>
@@ -99,7 +130,10 @@
 <script>
 const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
-let board, turn, over, mode = "ai", aiMark = "O", hintCell = null;
+let board, turn, over, hintCell = null;
+let mode = "ai";      // "ai" | "two"
+let choice = "X";     // "X" | "O" | "R" (what the human picked)
+let aiMark = "O";     // resolved at the start of every game
 const score = { X: 0, O: 0, D: 0 };
 
 const $ = (id) => document.getElementById(id);
@@ -155,6 +189,13 @@ function buildBoard() {
   }
 }
 
+function isAITurn() { return mode === "ai" && !over && turn === aiMark; }
+
+function label(mark) {
+  if (mode === "two") return "Player " + mark;
+  return mark === aiMark ? "AI (" + mark + ")" : "You (" + mark + ")";
+}
+
 function render() {
   const w = findWinner(board);
   [...boardEl.children].forEach((c, i) => {
@@ -162,13 +203,14 @@ function render() {
     c.className = "cell" + (board[i] ? " " + board[i].toLowerCase() : "")
       + (w && w.line.includes(i) ? " win" : "")
       + (hintCell === i ? " hint" : "");
+    if (hintCell === i) c.dataset.ghost = turn; else delete c.dataset.ghost;
     c.disabled = over || !!board[i] || isAITurn();
   });
 
-  if (w) setStatus(label(w.mark) + " wins");
-  else if (over) setStatus("It's a draw");
-  else if (isAITurn()) setStatus("AI is thinking…");
-  else setStatus(label(turn) + " to move");
+  if (w) $("status").textContent = label(w.mark) + " wins";
+  else if (over) $("status").textContent = "It's a draw";
+  else if (isAITurn()) $("status").textContent = "AI is thinking…";
+  else $("status").textContent = label(turn) + " to move";
 
   $("hintBtn").disabled = over || isAITurn();
   $("sx").textContent = score.X;
@@ -177,14 +219,6 @@ function render() {
   $("lx").textContent = mode === "ai" ? (aiMark === "X" ? "AI (X)" : "You (X)") : "Player X";
   $("lo").textContent = mode === "ai" ? (aiMark === "O" ? "AI (O)" : "You (O)") : "Player O";
 }
-
-function label(mark) {
-  if (mode === "two") return "Player " + mark;
-  return mark === aiMark ? "AI (" + mark + ")" : "You (" + mark + ")";
-}
-
-function setStatus(t) { $("status").textContent = t; }
-function isAITurn() { return mode === "ai" && !over && turn === aiMark; }
 
 function place(i) {
   board[i] = turn;
@@ -211,16 +245,20 @@ function showHint() {
   if (over || isAITurn()) return;
   hintCell = bestMove(board, turn);
   render();
-  setStatus(label(turn) + " to move. Best move: cell " + (hintCell + 1));
+  $("status").textContent = label(turn) + " to move. Best move: cell " + (hintCell + 1);
 }
 
 function newGame() {
   board = Array(9).fill(null);
-  turn = "X";
+  turn = "X";               // X always moves first
   over = false;
   hintCell = null;
-  aiMark = $("aiFirst").checked ? "X" : "O";
+  const human = choice === "R" ? (Math.random() < 0.5 ? "X" : "O") : choice;
+  aiMark = human === "X" ? "O" : "X";
   render();
+  if (mode === "ai" && choice === "R") {
+    $("status").textContent = "You are " + human + ". " + $("status").textContent;
+  }
   if (isAITurn()) setTimeout(aiMove, 350);
 }
 
@@ -228,14 +266,25 @@ function setMode(m) {
   mode = m;
   $("modeAI").setAttribute("aria-pressed", m === "ai");
   $("modeTwo").setAttribute("aria-pressed", m === "two");
-  $("aiFirstWrap").style.display = m === "ai" ? "" : "none";
+  $("pickRow").style.display = m === "ai" ? "" : "none";
+  score.X = score.O = score.D = 0;
+  newGame();
+}
+
+function setChoice(c) {
+  choice = c;
+  $("pickX").setAttribute("aria-pressed", c === "X");
+  $("pickO").setAttribute("aria-pressed", c === "O");
+  $("pickR").setAttribute("aria-pressed", c === "R");
   score.X = score.O = score.D = 0;
   newGame();
 }
 
 $("modeAI").addEventListener("click", () => setMode("ai"));
 $("modeTwo").addEventListener("click", () => setMode("two"));
-$("aiFirst").addEventListener("change", newGame);
+$("pickX").addEventListener("click", () => setChoice("X"));
+$("pickO").addEventListener("click", () => setChoice("O"));
+$("pickR").addEventListener("click", () => setChoice("R"));
 $("hintBtn").addEventListener("click", showHint);
 $("newBtn").addEventListener("click", newGame);
 
